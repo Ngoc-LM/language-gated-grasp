@@ -1,0 +1,3 @@
+{"train_pairs": 183559, "train_scenes": 35927, "train_names": 238,
+ "seen": {"pairs": 1376, "scenes": 412, "names": 41, "names_in_train": 40, "pairs_in_train": 1373, "median_train_pairs_per_name": 3723.0, "pairs_in_multi_object_scenes": 589},
+ "unseen": {"pairs": 601, "scenes": 193, "names": 23, "names_in_train": 0, "pairs_in_train": 0, "median_train_pairs_per_name": 0.0, "pairs_in_multi_object_scenes": 105}}

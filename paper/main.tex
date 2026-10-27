@@ -33,7 +33,7 @@ Hanoi University of Science and Technology\\
 
 \begin{strip}
 \centering
-\vspace{-2.0em}
+\vspace{-2.6em}
 \resizebox{\textwidth}{!}{\input{fig_arch}}
 \captionsetup{hypcap=false}
 \captionof{figure}{\textbf{Language-Gated GR-ConvNet.} Blue: trained (2.9M parameters); CLIP~\cite{radford2021learning}: frozen. The prompt enters through a spatial gate $A$ and through FiLM~\cite{perez2018film} after every residual block. C0 replaces $W_t t$ by a learned vector $q$.}
@@ -42,17 +42,17 @@ Hanoi University of Science and Technology\\
 \end{strip}
 
 \begin{abstract}
-Language-driven grasp detection places a grasp on the object part named by a free-form prompt. The proposed method steers the GR-ConvNet grasp CNN with FiLM and a \emph{language gate}: a spatial map of cosine similarities between frozen CLIP patch tokens and the prompt embedding. On Grasp-Anything++, the model reaches 68.6\% seen and 57.8\% unseen success (two-seed mean) on the official test split, against 54.7\% and 40.7\% with FiLM alone. A control gate that receives the same CLIP features but not the prompt scores 11.8 unseen points lower in both seeds, so prompt-dependent gating gives 59\% of the gain in harmonic mean over FiLM. Code: \url{https://github.com/Ngoc-LM/language-gated-grasp}.
+Language-driven grasp detection places a grasp on the object part named by a free-form prompt. The proposed method steers the GR-ConvNet grasp CNN with FiLM and a \emph{language gate}: a spatial map of cosine similarities between frozen CLIP patch tokens and the prompt embedding. On the annotated pairs of the official LGD test split of Grasp-Anything++, the model reaches 68.6\% seen and 57.8\% unseen success (two-seed mean), against 54.7\% and 40.7\% with FiLM alone. A control gate that receives the same CLIP features but not the prompt scores 11.8 unseen points lower in both seeds ($p<10^{-7}$), so prompt-dependent gating gives 9.5 of the 16.1-point gain in harmonic mean over FiLM. Code: \url{https://github.com/Ngoc-LM/language-gated-grasp}.
 \end{abstract}
 
 \section{Introduction}
-A parallel-jaw grasp~\cite{jiang2011efficient} is a rotated rectangle $g=(x,y,w,h,\theta)$. Language-driven grasp detection conditions $g$ on a prompt such as ``grasp the knife by its handle'', so the model must also locate the named part. On Grasp-Anything++ (1M images, 10M prompts), the reference method LGD~\cite{vuong2024language} is a diffusion model. This work tests whether a single-pass grasp CNN can instead be steered by language. The contributions are (i) a \emph{language gate} that re-weights GR-ConvNet~\cite{kumra2020antipodal} features by CLIP~\cite{radford2021learning} patch--text similarity (\cref{fig:arch}); (ii) a controlled ablation (text-free gate, two seeds) that separates CLIP visual features from prompt-dependent gating; (iii) an evaluation that excludes test scenes and unseen object names from training, with open code.
+A parallel-jaw grasp~\cite{jiang2011efficient} is a rotated rectangle $g=(x,y,w,h,\theta)$. Language-driven grasp detection conditions $g$ on a prompt such as ``grasp the knife by its handle'', so the model must also locate the named part. On Grasp-Anything++ (1M images, 10M prompts), the reference method LGD~\cite{vuong2024language} is a diffusion model. This work tests whether a single-pass grasp CNN can instead be steered by language. The contributions are (i) a \emph{language gate} that re-weights GR-ConvNet~\cite{kumra2020antipodal} features by CLIP~\cite{radford2021learning} patch--text similarity (\cref{fig:arch}); and (ii) a controlled ablation (text-free gate, two seeds, paired tests) that separates CLIP visual features from prompt-dependent gating, with open code.
 
 \section{Related Work}
-Generative grasp CNNs~\cite{morrison2018closing,kumra2020antipodal} regress dense grasp maps. CLIPort~\cite{shridhar2022cliport} and CROG~\cite{tziafas2023language} use CLIP for manipulation and referring grasp synthesis, and LGD~\cite{vuong2024language} denoises grasps under text guidance on data built with foundation models~\cite{vuong2024grasp}. Pixel--text score maps from CLIP-style encoders drive dense prediction~\cite{zhou2022extract}; the language gate uses such a map as a spatial prior inside a grasp CNN.
+Generative grasp CNNs~\cite{morrison2018closing,kumra2020antipodal} regress dense grasp maps. CLIPort~\cite{shridhar2022cliport} and CROG~\cite{tziafas2023language} use CLIP for manipulation and grasping, and LGD~\cite{vuong2024language} denoises grasps under text guidance on data built with foundation models~\cite{vuong2024grasp}. Pixel--text score maps from CLIP-style encoders drive dense prediction~\cite{zhou2022extract}; the language gate uses one as a spatial prior in a grasp CNN.
 
 \section{Method}
-\textbf{Grasp maps.} As in~\cite{kumra2020antipodal}, the network predicts four $224{\times}224$ maps: quality $Q$, $\cos2\Theta$, $\sin2\Theta$ (doubled angle, as a grasp is $180^\circ$-symmetric) and opening $W$. Targets fill the central third of each ground-truth rectangle. The grasp is read at $\arg\max Q$ of the smoothed maps, with $\theta=\tfrac12\operatorname{atan2}(\sin2\Theta,\cos2\Theta)$ and $h=w/2$.
+\textbf{Grasp maps.} As in~\cite{kumra2020antipodal}, the network predicts four $224{\times}224$ maps: quality $Q$, $\cos2\Theta$, $\sin2\Theta$ and opening $W$. Targets fill the central third of each ground-truth rectangle. The grasp is read at $\arg\max Q$ of the smoothed maps, with $\theta=\tfrac12\operatorname{atan2}(\sin2\Theta,\cos2\Theta)$ and $h=w/2$.
 
 \textbf{FiLM.} The encoder maps the image to $F\in\mathbb{R}^{128\times56\times56}$, followed by five residual blocks and a decoder. With $t$ the normalised CLIP text embedding, each residual block $k$ is followed by
 \begin{equation}
@@ -67,22 +67,15 @@ S_{ij}=\cos(W_p\,p_{ij},\,W_t\,t),\\
 A=\mathrm{Up}_{56}\big(\sigma(\tau S)\big),\qquad F'=F\odot(1+A),
 \end{gathered}
 \end{equation}
-with learned $W_p\in\mathbb{R}^{256\times768}$, $W_t\in\mathbb{R}^{256\times512}$ and temperature $\tau$ (initialised to 10). The residual form $1{+}A$ only amplifies prompt-matching regions. The \textbf{C0 control} replaces $W_t t$ with a learned vector $q$: its gate sees the same CLIP features but not the prompt (FiLM still receives $t$). \textbf{Loss:} Smooth-$\ell_1$ summed over the four maps. Variant D adds $0.5\,\mathrm{BCE}(\tau S, M)$, $M$ the pooled ground-truth $Q$ mask.
+where $p_{ij}\in\mathbb{R}^{768}$ is a patch token, $W_p$ and $W_t$ are learned affine maps to $\mathbb{R}^{256}$, $\tau$ is a learned scale (initially 10), and $\mathrm{Up}_{56}$ bilinearly upsamples $S\in\mathbb{R}^{14\times14}$ to $56{\times}56$. The residual form $1{+}A$ only amplifies prompt-matching regions. The \textbf{C0 control} replaces $W_t t$ with a learned vector $q$: its gate sees the same CLIP features but not the prompt (FiLM still receives $t$), and it has 131k fewer parameters than C. \textbf{Loss:} Smooth-$\ell_1$ summed over the four maps. Variant D adds $0.5\,\mathrm{BCE}(\tau S, M)$, $M$ the pooled ground-truth $Q$ mask.
 
 \section{Experiments}
-\textbf{Protocol.} Training uses 35,964 Grasp-Anything++ scenes (183,559 prompt--grasp pairs) and validation 734. Testing follows the official LGD split (seen: the 70\% most frequent LVIS categories), restricted to annotated pairs: 1,376 seen and 601 unseen from 727 of 803 object keys. Test scenes, and training pairs whose object name is an unseen test name, are excluded from training. A top-1 grasp is correct if its IoU exceeds 0.25 and its angle error is below $30^\circ$ for some ground-truth grasp of the prompted part; $H$ is the harmonic mean of seen and unseen success. Decoding ground-truth maps scores 97.5\% on 200 validation pairs, the ceiling of the encoding. All runs use AdamW (lr $10^{-3}$, cosine), batch 32, 6 epochs, no augmentation and one T4 (2.5--2.7\,h); checkpoints are selected on 1,000 validation pairs.
+\textbf{Protocol.} Training uses 35,927 Grasp-Anything++ scenes (183,559 prompt--grasp pairs) and validation 734 scenes. Testing follows the official LGD seen/unseen split, restricted to annotated pairs: 1,376 seen and 601 unseen from 727 of 803 object keys. Test scenes, and training pairs whose object name is an unseen test name, are excluded from training; 40 of the 41 seen names (1,373 of 1,376 pairs) occur in training. A top-1 grasp is correct if its IoU exceeds 0.25 and its angle error is below $30^\circ$ for some ground-truth grasp of the prompted part; $H$ is the harmonic mean of seen and unseen success. All runs use AdamW (lr $10^{-3}$, weight decay $10^{-4}$, 500 warm-up steps, cosine), fp16, batch 32 and 6 epochs on one T4 (2.5--2.7\,h); checkpoints are selected on 1,000 validation pairs.
 
 \begin{figure}[t]
 \centering
-\setlength{\tabcolsep}{0.8pt}
-\renewcommand{\arraystretch}{0.6}
-\begin{tabular}{ccc}
-\includegraphics[width=0.2\linewidth]{fig/B_flame.jpg} &
-\includegraphics[width=0.2\linewidth]{fig/C0_flame.jpg} &
-\includegraphics[width=0.2\linewidth]{fig/C_flame.jpg} \\
-{\scriptsize B (FiLM) \ding{55}} & {\scriptsize C0 (text-free gate) \ding{55}} & {\scriptsize C (proposed) \ding{51}}
-\end{tabular}
-\caption{\textbf{Unseen prompt} ``Fetch candle by its flame'' (green: GT, red: top-1): only C succeeds. On ``lamp by its stand'', C0 succeeds, C fails.}
+\includegraphics[width=\linewidth]{fig/gate.png}
+\caption{\textbf{Gate maps} (heat), top-1 grasps (red) and GT (green) on an unseen test image, seed 0. P1: ``Hold chopsticks at its pair of sticks''; P2: ``Take hold of bottle on its container''. The C0 gate ignores the prompt; the C gate follows it. Shown: largest C-gate change among these scenes where only C is correct for both.}
 \label{fig:qual}
 \end{figure}
 
@@ -94,7 +87,7 @@ with learned $W_p\in\mathbb{R}^{256\times768}$, $W_t\in\mathbb{R}^{256\times512}
 \toprule
  & Model & Seen & Unseen & $H$ & ms \\
 \midrule
-A & GR-ConvNet (no text) & 27.3 & 27.8 & 27.5 & 4.3 \\
+A & GR-ConvNet (RGB, no text) & 27.3 & 27.8 & 27.5 & 4.3 \\
 B & + FiLM$(t)$ & 54.7$_{\pm2.7}$ & 40.7$_{\pm0.6}$ & 46.7$_{\pm1.4}$ & 12.3 \\
 C0 & B + text-free gate & 63.3$_{\pm0.5}$ & 46.0$_{\pm1.9}$ & 53.3$_{\pm1.1}$ & 18.2 \\
 \rowcolor{cvprblue!10}
@@ -102,16 +95,16 @@ C & B + language gate & \textbf{68.6}$_{\pm0.5}$ & \textbf{57.8}$_{\pm1.9}$ & \t
 D & C + gate supervision & 70.9 & 57.7 & 63.6 & 18.8 \\
 \bottomrule
 \end{tabular}
-\caption{\textbf{Success rate (\%) on the annotated test split.} B, C0, C: mean${\pm}$half-range over two seeds; A, D: one seed. ms: batch-1 end-to-end T4 latency incl.\ CLIP.}
+\caption{\textbf{Success rate (\%) on the annotated test split.} B, C0, C: two-seed mean${\pm}$half-range. ms: batch-1 T4 latency incl.\ CLIP.}
 \label{tab:main}
 \end{table}
 
-\textbf{Results.} Each row of \cref{tab:main} adds one component; A ignores the prompt, so its seen and unseen scores coincide (27.3 vs.\ 27.8). FiLM (B) raises $H$ by 19.1 points, CLIP features behind the text-free gate (C0) add 6.6, and letting the gate read the prompt (C) adds 9.5. Within each seed, C exceeds C0 by 11.8 unseen points and by 6.3 and 4.4 seen points. These gaps exceed both the seed half-ranges (at most 1.9) and the 95\% interval of a two-proportion difference ($\pm5.6$ unseen, $\pm3.5$ seen). Prompt-dependent gating thus accounts for 69\% of the B$\to$C gain on unseen objects, 59\% in $H$ and 38\% on seen objects, where CLIP features contribute most (\cref{fig:qual}). Gate supervision (D, one seed) stays within 2.3 points of C on every split, inside these intervals, so the simpler C is retained.
+\textbf{Results.} FiLM (B) raises $H$ by 19.1 points, CLIP features behind the text-free gate (C0) add 6.6, and letting the gate read the prompt (C) adds 9.5. Within each seed, C exceeds C0 by 11.8 unseen points and by 6.3 and 4.4 seen points; paired McNemar tests on the same test pairs give $p<10^{-3}$ in all four comparisons, and scene-resampled 95\% bootstrap intervals exclude zero (unseen: $[6.6,17.5]$ and $[5.9,17.4]$ points). In seed 1, the text-free gate raises seen success over B by 6.4 points ($p<10^{-6}$) but unseen success by only 2.8 ($p=0.21$). In the 118 multi-object test scenes, C is correct for two prompts on different objects in 54 and C0 in 40 (seed 0, \cref{fig:qual}). Prompt-dependent gating therefore accounts for 69\% of the B$\to$C gain on unseen objects, 59\% in $H$ and 38\% on seen objects. Gate supervision (D) does not differ significantly from C (seed 0; $p=0.06$ seen, $0.24$ unseen), so C is retained.
 
-\textbf{Cost and limitations.} C adds 0.33M trained parameters to B and a frozen 149M-parameter CLIP (12.5\,ms per frame with a cached prompt). Training uses 3.6\% of the images; the intervals ignore that prompts share scenes. The prompt-blind A already exceeds the 18 unseen that LGD~\cite{vuong2024language} reports for GR-ConvNet with CLIP, so the protocols differ and LGD's 48/42 (seen/unseen) are not compared.
+\textbf{Cost and limitations.} C adds 0.33M trained parameters to B and a frozen 149M-parameter CLIP (12.5\,ms per frame with a cached prompt), and trains on 3.6\% of the images. A already exceeds the 18 unseen that LGD~\cite{vuong2024language} reports for GR-ConvNet with CLIP, so LGD's 48/42 are not compared.
 
 \section{Conclusion}
-A frozen-CLIP patch--text gate raises the $H$ of a FiLM-conditioned GR-ConvNet from 46.7 to 62.8; the text-free control attributes 9.5 points to prompt-dependent gating.
+A frozen-CLIP patch--text gate raises the $H$ of a FiLM-conditioned GR-ConvNet from 46.7 to 62.8, 9.5 points of it through prompt-dependent gating.
 
 {\footnotesize
 \bibliographystyle{ieeenat_fullname}
