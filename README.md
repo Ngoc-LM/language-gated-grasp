@@ -28,7 +28,7 @@ Success is the top-1 grasp with IoU > 0.25 and angle error < 30°. `H` is the ha
 
 * **B → C0 (+9.1 H):** the gain from adding frozen CLIP visual features.
 * **C0 → C (+8.4 H, +9.9 unseen):** the gain from letting the gate read the prompt. This gap is larger than both the seed spread and the 95% binomial intervals (about ±2.5 points seen, ±3.9 points unseen).
-* **D:** gate supervision does not help measurably, so it stays within the seed spread of C.
+* **D:** gate supervision adds 2.2 seen points, which is within binomial noise, and leaves unseen and H unchanged. We therefore keep the simpler C.
 
 The numbers are **not directly comparable** to the LGD paper (seen 0.48 / unseen 0.42 / H 0.45). We train on about 4% of the data, and we evaluate only on the test pairs whose annotations are released.
 
@@ -63,7 +63,7 @@ src/
   eval_utils.py   success metric (shared verbatim with the data notebook)
   packed_io.py    reader for the packed image/label files
 results/          summary tables, validation curves, latency, figures
-paper/            LaTeX source and PDF of the 2-page paper
+paper/            LaTeX source (CVPR template) and PDF of the 2-page paper
 ```
 
 ## Reproducing

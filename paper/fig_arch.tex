@@ -1,0 +1,46 @@
+\begin{tikzpicture}[
+  font=\sffamily\footnotesize, >={Stealth[length=4pt]},
+  blk/.style={draw, rounded corners=2pt, align=center, minimum height=7mm, inner sep=2.5pt},
+  frz/.style={blk, fill=gray!12, dashed},
+  trn/.style={blk, fill=cvprblue!14},
+  ten/.style={align=center, inner sep=1pt},
+  op/.style={draw, circle, fill=white, inner sep=0pt, minimum size=4.5mm}]
+  % ---- inputs
+  \node[ten] (img) at (0.9,-0.0) {RGB image\\$224{\times}224$};
+  \node[ten] (txt) at (0.9,1.45) {prompt: ``grasp the\\mug by its handle''};
+  % ---- language lane (y=1.75)
+  \node[frz, minimum width=22mm] (ctext) at (3.9,1.45) {CLIP text encoder};
+  \node[ten, anchor=west] (t) at (5.45,1.45) {$t\in\mathbb{R}^{512}$};
+  % ---- CLIP vision lane (y=0.65)
+  \node[frz, minimum width=22mm] (cvis) at (3.9,0.65) {CLIP ViT-B/16};
+  \node[ten, anchor=west] (P) at (5.45,0.65) {$P\in\mathbb{R}^{14\times14\times768}$};
+  \node[trn, minimum width=33mm] (gate) at (10.0,0.65) {language gate, Eq.~(2)\\$S=\cos(W_pP,\,W_t t)$};
+  % ---- geometry lane (y=-0.75)
+  \node[trn, minimum width=22mm] (enc) at (3.9,-0.6) {GR-ConvNet encoder};
+  \node[op] (mul) at (10.0,-0.6) {$\odot$};
+  \node[trn, minimum width=30mm] (res) at (13.2,-0.6) {$5{\times}$[ResBlock$\,\rightarrow\,$FiLM$(t)$]\\Eq.~(1)};
+  \node[trn] (dec) at (15.75,-0.6) {decoder};
+  \node[trn] (heads) at (17.7,-0.6) {$Q,\ \cos2\Theta,$\\$\sin2\Theta,\ W$};
+  \node[ten, anchor=west] (out) at (19.55,-0.6) {top-1 grasp\\$(x,y,w,h,\theta)$};
+  % ---- arrows
+  \draw[->] (txt) -- (ctext);
+  \draw[->] (ctext) -- (t);
+  \draw[->] (img.east) -- ++(0.35,0) |- (cvis.west);
+  \draw[->] (img.east) -- ++(0.35,0) |- (enc.west);
+  \draw[->] (cvis) -- (P);
+  \draw[->] (P) -- (gate);
+  \draw[->] (enc) -- node[above]{$F\in\mathbb{R}^{128\times56\times56}$} (mul);
+  \draw[->] (gate) -- node[right]{$A=\mathrm{Up}\big(\sigma(\tau S)\big)$} (mul);
+  \draw[->] (mul) -- node[above]{$F'$} (res);
+  \draw[->] (res) -- (dec);
+  \draw[->] (dec) -- (heads);
+  \draw[->] (heads) -- (out);
+  \draw[->] (t.east) -- (13.2,1.45) -- (res.north);
+  \draw[->] (10.0,1.45) -- (gate.north);
+  \fill (10.0,1.45) circle (0.9pt);
+  % legend
+  \node[frz, minimum height=3mm, minimum width=5mm] (lf) at (16.0,1.45) {};
+  \node[anchor=west] at (lf.east) {frozen};
+  \node[trn, minimum height=3mm, minimum width=5mm] (lt) at (17.9,1.45) {};
+  \node[anchor=west] at (lt.east) {trained};
+\end{tikzpicture}
