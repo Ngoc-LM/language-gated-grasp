@@ -1,0 +1,10 @@
+torch>=2.2
+torchvision>=0.17
+transformers>=4.37
+numpy
+pandas
+pyarrow
+Pillow
+shapely
+opencv-python-headless
+matplotlib

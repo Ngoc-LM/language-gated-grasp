@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pt
+*.npy
+*.bin
+*.u8
+*.f16
+runs/
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+.ipynb_checkpoints/
