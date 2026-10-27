@@ -1,6 +1,6 @@
 # Language-Gated GR-ConvNet
 
-**Steering a lightweight grasp detector with CLIP patch–text similarity**
+**Steering a compact grasp CNN with frozen CLIP patch–text similarity**
 Minh-Ngoc Luong. Short paper for the FPT Frontier Innovators 2026 (QACI) assignment on language-driven grasp detection, Grasp-Anything++.
 
 ![architecture](results/architecture.png)
@@ -14,29 +14,30 @@ There is also a control variant, **C0**. It replaces `W_t t` with a learned, pro
 
 ## Results (official LGD test split of Grasp-Anything++)
 
-All runs train for 6 epochs on 35,964 scenes (183,559 prompt–grasp pairs). Each run uses one Kaggle T4 and takes about 2.7 h.
+All runs train for 6 epochs on 35,964 scenes (183,559 prompt–grasp pairs), one Kaggle T4 per run (2.5–2.7 h).
 
-Success is the top-1 grasp with IoU > 0.25 and angle error < 30°. `H` is the harmonic mean of seen and unseen success. Latency is end-to-end, batch 1, fp16 on a T4, and includes the frozen CLIP encoders.
+Success is the top-1 grasp with IoU > 0.25 and angle error < 30°. `H` is the harmonic mean of seen and unseen success. Latency is end-to-end, batch 1, fp16 on a T4, and includes the frozen CLIP encoders. B, C0 and C are the mean ± half-range of seeds 0 and 1; A and D use seed 0 only.
 
 | run | model | seen | unseen | H | latency |
 |---|---|---|---|---|---|
 | A | GR-ConvNet, vision only | 27.3 | 27.8 | 27.5 | 4.3 ms |
-| B | + FiLM(t) | 52.0 | 40.1 | 45.3 | 12.3 ms |
-| C0 (`E`) | B + text-free CLIP gate | 62.8 | 47.9 | 54.4 | 18.2 ms |
-| **C** | **B + language gate (ours)**, mean of seeds 0/1 | **68.6 ± 0.5** | **57.8 ± 1.9** | **62.8 ± 1.3** | 18.9 ms |
+| B | + FiLM(t) | 54.7 ± 2.7 | 40.7 ± 0.6 | 46.7 ± 1.4 | 12.3 ms |
+| C0 (`E`) | B + text-free CLIP gate | 63.3 ± 0.5 | 46.0 ± 1.9 | 53.3 ± 1.1 | 18.2 ms |
+| **C** | **B + language gate (proposed)** | **68.6 ± 0.5** | **57.8 ± 1.9** | **62.8 ± 1.3** | 18.9 ms |
 | D | C + gate supervision | 70.9 | 57.7 | 63.6 | 18.8 ms |
 
-* **B → C0 (+9.1 H):** the gain from adding frozen CLIP visual features.
-* **C0 → C (+8.4 H, +9.9 unseen):** the gain from letting the gate read the prompt. This gap is larger than both the seed spread and the 95% binomial intervals (about ±2.5 points seen, ±3.9 points unseen).
-* **D:** gate supervision adds 2.2 seen points, which is within binomial noise, and leaves unseen and H unchanged. We therefore keep the simpler C.
+* **B → C0 (+6.6 H):** gain from frozen CLIP patch features behind a gate that cannot read the prompt.
+* **C0 → C (+9.5 H):** gain from letting the gate read the prompt. Within each seed, C exceeds C0 by 11.8 unseen points and by 6.3 / 4.4 seen points. These gaps exceed the seed half-ranges (≤ 1.9) and the 95% interval of a two-proportion difference (±5.6 unseen, ±3.5 seen; the interval treats test pairs as independent).
+* **Share of the B → C gain due to prompt-dependent gating:** 69% unseen, 59% H, 38% seen.
+* **D:** gate supervision stays within 2.3 points of C on every split, so the simpler C is kept.
 
-The numbers are **not directly comparable** to the LGD paper (seen 0.48 / unseen 0.42 / H 0.45). We train on about 4% of the data, and we evaluate only on the test pairs whose annotations are released.
+The numbers are **not comparable** to the LGD paper (seen 48 / unseen 42; 18 unseen for GR-ConvNet + CLIP). Training here uses 3.6% of the images and testing covers only the annotated test pairs; the prompt-blind model A already exceeds the reported GR-ConvNet + CLIP unseen score, which indicates a different protocol.
 
-Per-run metrics are in [`results/summary.csv`](results/summary.csv). Validation curves are in [`results/fixed_val_curves.csv`](results/fixed_val_curves.csv) and latency in [`results/latency_e2e.csv`](results/latency_e2e.csv).
+Per-run metrics (both seeds) are in [`results/summary.csv`](results/summary.csv). Validation curves (all runs except the seed-1 runs of B and C0) are in [`results/fixed_val_curves.csv`](results/fixed_val_curves.csv) and latency in [`results/latency_e2e.csv`](results/latency_e2e.csv).
 
 ## Evaluation protocol
 
-* **Test set.** We use the official LGD split files (`split/grasp-anything++/test/{seen,unseen}.obj`): 573 seen and 230 unseen object keys. The files are parsed with a regex and never unpickled. This gives 1,376 seen and 601 unseen prompt–grasp pairs that have both a prompt and a label file.
+* **Test set.** The official LGD split files (`split/grasp-anything++/test/{seen,unseen}.obj`) are used: 573 seen and 230 unseen object keys. The files are parsed with a regex and never unpickled. This gives 1,376 seen and 601 unseen prompt–grasp pairs that have both a prompt and a label file.
 * **Leakage control.**
   * All 620 test scenes are removed from training.
   * Every training pair whose object name appears among the unseen test objects is also removed. This is done after name normalisation.
@@ -72,9 +73,9 @@ paper/            LaTeX source (CVPR template) and PDF of the 2-page paper
    * It downloads the official test-split keys from the LGD repository.
    * It streams a ~3 GB image prefix plus the annotation archives from the public Hugging Face dataset `airvlab/Grasp-Anything-pp`.
    * It writes packed files (`images.bin`, `labels.npy`, parquet indexes) and the train/val/test manifests.
-   * Save the output as a Kaggle dataset; ours is called `ga-pp-packed`.
+   * Save the output as a Kaggle dataset (here `ga-pp-packed`).
 2. **Train and evaluate.** Run `notebooks/02_train_evaluate.ipynb` with **GPU T4 x2** and the packed dataset attached.
-   * Choose the runs in cell 3, e.g. `VARIANTS=['A','B']`, `['C','D']` or `['E','C_s1']`.
+   * Choose the runs in cell 3, e.g. `VARIANTS=['A','B']`, `['C','D']`, `['E','C_s1']` or `['B_s1','E_s1']`.
    * Each pair of runs trains in parallel, one per GPU, in about 3 h.
    * Results are written to `/kaggle/working/results/`.
 3. **Run the scripts directly** on any machine with two CUDA GPUs (instead of the notebook):
