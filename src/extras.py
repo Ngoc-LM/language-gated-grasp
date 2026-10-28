@@ -110,7 +110,11 @@ def coverage(root, found, test, out):
     for name in sorted(unseen_names):
         pattern = r'\b' + re.escape(name) + r'(?:e?s)?\b'
         match = lowered.str.contains(pattern, regex=True)
-        if match.any(): hits[name] = {'pairs': int(match.sum()), 'examples': train.loc[match, 'prompt'].head(5).tolist()}
+        if match.any():
+            in_object = train.loc[match, 'obj_name'].str.contains(pattern, regex=True)
+            hits[name] = {'pairs': int(match.sum()), 'in_parsed_object_name': int(in_object.sum()),
+                          'object_names': train.loc[match, 'obj_name'].value_counts().head(10).to_dict(),
+                          'examples': train.loc[match, 'prompt'].head(5).tolist()}
     summary['unseen_name_mentions_in_train'] = {'names': len(hits), 'pairs': int(sum(h['pairs'] for h in hits.values())),
                                                 'by_name': hits}
     for split in ('seen', 'unseen'):
