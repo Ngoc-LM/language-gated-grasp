@@ -19,20 +19,31 @@ import pandas as pd
 from scipy.stats import binomtest
 
 RUNS = ['A', 'B', 'B_s1', 'E', 'E_s1', 'C', 'C_s1', 'D']
-PAIRS = [('C', 'E'), ('C_s1', 'E_s1'), ('E_s1', 'B_s1'), ('C_s1', 'B_s1'), ('D', 'C')]
+PAIRS = [('C', 'E'), ('C_s1', 'E_s1'), ('E', 'B'), ('E_s1', 'B_s1'), ('C', 'B'), ('C_s1', 'B_s1'), ('D', 'C'), ('B', 'A')]
 
 def log(message):
     print(message, flush=True)
 
-def find_root():
+def find_root(arg=None):
+    if arg: return Path(arg)
     hits = sorted(glob.glob('/kaggle/input/**/ga_eval/test_seen.csv', recursive=True))
     if not hits: raise FileNotFoundError('Attach the ga-pp-packed dataset (ga_eval/test_seen.csv not found)')
     return Path(hits[0]).parent
 
-def find_runs():
+def find_checkpoints():
     found = {}
     for run in RUNS:
-        hits = sorted(glob.glob(f'/kaggle/input/**/results/{run}/test_seen_predictions.csv', recursive=True))
+        hits = sorted(glob.glob(f'/kaggle/input/**/results/{run}/best.pt', recursive=True))
+        if hits: found[run] = Path(hits[0]).parent
+    return found
+
+def find_runs(runs_dir=None):
+    """Per-pair test predictions: runs_dir/<run>/ (e.g. reeval.py output) or results/<run>/ of attached Kaggle inputs."""
+    found = {}
+    for run in RUNS:
+        pattern = f'{runs_dir}/{run}/test_seen_predictions.csv' if runs_dir else \
+            f'/kaggle/input/**/results/{run}/test_seen_predictions.csv'
+        hits = sorted(glob.glob(pattern, recursive=True))
         if hits: found[run] = Path(hits[0]).parent
     log('runs with per-pair predictions: ' + ', '.join(f'{k} <- {v}' for k, v in found.items()))
     return found
@@ -91,6 +102,17 @@ def coverage(root, found, test, out):
     test['train_pairs_of_name'] = test['obj_name'].map(counts).fillna(0).astype(int)
     scene_objs = test.groupby('scene')['obj'].nunique(); test['multi_object'] = test['scene'].map(scene_objs) > 1
     summary = {'train_pairs': len(train), 'train_scenes': int(train['scene'].nunique()), 'train_names': len(names)}
+    # Independent leakage check: word-boundary search of every unseen test name (and its plural) in the raw text of
+    # the filtered training prompts, without the prompt-template parser used by the filter itself.
+    import re
+    lowered = train['prompt'].str.lower()
+    hits = {}
+    for name in sorted(unseen_names):
+        pattern = r'\b' + re.escape(name) + r'(?:e?s)?\b'
+        found = lowered.str.contains(pattern, regex=True)
+        if found.any(): hits[name] = {'pairs': int(found.sum()), 'examples': train.loc[found, 'prompt'].head(5).tolist()}
+    summary['unseen_name_mentions_in_train'] = {'names': len(hits), 'pairs': int(sum(h['pairs'] for h in hits.values())),
+                                                'by_name': hits}
     for split in ('seen', 'unseen'):
         s = test[test['split'] == split]
         summary[split] = {'pairs': len(s), 'scenes': int(s['scene'].nunique()), 'names': int(s['obj_name'].nunique()),
@@ -117,11 +139,12 @@ def coverage(root, found, test, out):
     log('SUCCESS BY SUBSET\n' + frame.to_string(index=False, float_format=lambda x: f'{x:.4f}'))
     return test
 
-def run_logs(found, out):
+def run_logs(out):
     rows = []
-    for run, folder in found.items():
-        path = folder / 'train_log.csv'
-        if not path.is_file(): continue
+    for run in RUNS:
+        hits = sorted(glob.glob(f'/kaggle/input/**/results/{run}/train_log.csv', recursive=True))
+        if not hits: continue
+        path = Path(hits[0])
         f = pd.read_csv(path); v = f.loc[f['event'] == 'val']
         rows.append({'run': run, **{f'epoch{int(e)}': round(float(x), 4) for e, x in zip(v['epoch'], v['val_success'])}})
     for name in ('manifest_fix.json', 'prepared.json', 'target_roundtrip.json'):
@@ -198,6 +221,7 @@ def gate_maps(root, found, test, out, max_scenes=400):
     stats['mean_gate_change_C'] = float(np.mean([e['gate_change']['C'] for e in records]))
     stats['mean_gate_change_E'] = float(np.mean([e['gate_change']['E'] for e in records]))
     log('GATE STATS ' + json.dumps(stats))
+    (out / 'gate_stats.json').write_text(json.dumps(stats, indent=2))
     records.sort(key=score, reverse=True)
     (out / 'gate_examples.json').write_text(json.dumps(records[:20]))
     for rank, e in enumerate(records[:6]):
@@ -215,17 +239,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', default='/kaggle/working/extras')
     parser.add_argument('--skip-gpu', action='store_true')
+    parser.add_argument('--data-root', help='ga_eval folder (default: search /kaggle/input)')
+    parser.add_argument('--runs-dir', help='folder with <run>/test_{seen,unseen}_predictions.csv (default: attached inputs)')
     args = parser.parse_args()
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
-    root = find_root(); log(f'data root: {root}')
-    found = find_runs(); test = test_frame(root)
+    root = find_root(args.data_root); log(f'data root: {root}')
+    found = find_runs(args.runs_dir); test = test_frame(root)
     log(f'test pairs: {len(test)}; scenes: {test["scene"].nunique()}')
     mcnemar(found, test, out)
     test = coverage(root, found, test, out)
-    run_logs(found, out)
+    run_logs(out)
     if not args.skip_gpu:
-        ckpt = {run: folder for run, folder in found.items() if (folder / 'best.pt').is_file()}
-        gate_maps(root, ckpt, test, out)
+        gate_maps(root, find_checkpoints(), test, out)
     log('EXTRAS DONE')
 
 if __name__ == '__main__':

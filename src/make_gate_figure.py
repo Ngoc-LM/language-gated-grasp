@@ -1,6 +1,6 @@
 """Render the gate-map figure of the paper from extras.py output (gate_best.json).
 
-    python make_gate_figure.py gate_best.json --index 0 --out ../paper/fig/gate.pdf
+    python make_gate_figure.py gate_best.json --index 0 --out ../paper/fig/gate.png
 
 Panels: C0 and C, each for two prompts on the same image. Heat map: gate sigma(tau*S) on the 14x14 patch grid
 (bilinear upsampling for display). Green: ground-truth grasps of the prompted part. Red: top-1 prediction.
@@ -25,9 +25,9 @@ def corners(rect, scale):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('json'); parser.add_argument('--index', type=int, default=0)
-    parser.add_argument('--out', default='gate.pdf')
+    parser.add_argument('--out', default='gate.png')
     args = parser.parse_args()
-    entry = json.load(open(args.json))[args.index]
+    with open(args.json) as stream: entry = json.load(stream)[args.index]
     image = np.asarray(Image.open(io.BytesIO(base64.b64decode(entry['jpeg320_b64']))).convert('RGB'))
     size = image.shape[0]; scale = size / 416.0
     prompts = entry['prompts'][:2]

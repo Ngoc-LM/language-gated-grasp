@@ -17,6 +17,7 @@ class Config:
     num_workers: int = 2
     width_norm: float = 150.0
     min_rect_px: float = 2.0
+    decode: str = 'plateau'  # 'plateau' (most interior pixel of the near-max set) or 'argmax' (original runs)
     lambda_gate: float = 0.5
     val_subset: int = 1000
     smoke: bool = False
