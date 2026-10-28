@@ -32,7 +32,7 @@ With the prompt embedding cached (the prompt rarely changes between frames), C t
 * **C0 → C (+9.4 H):** gain from letting the gate read the prompt. Seed for seed, C exceeds C0 by 11.6 / 11.8 unseen points and by 6.3 / 4.4 seen points. Paired McNemar tests on the same test pairs give p < 1e-3 in all four comparisons (2 seeds × seen/unseen), and 95% bootstrap intervals that resample whole scenes exclude zero.
 * **Share of the B → C gain due to prompt-dependent gating:** 69% unseen, 59% H, 38% seen.
 * **D:** gate supervision does not differ significantly from C of the same seed (p = 0.06 seen, 0.28 unseen), so the simpler C is kept.
-* **Gate maps.** In the 118 test scenes with more than one annotated object, C (seed 0) is correct for two prompts on different objects in 54 scenes and C0 in 40. The C0 gate is identical for every prompt (mean absolute change 0.0); the C gate changes by 0.09 on average. The paper's Fig. 2 shows one such scene.
+* **Gate maps.** In the 118 test scenes with more than one annotated object, C (seed 0) is correct for two prompts on different objects in 55 scenes and C0 in 40 (from the committed predictions; `gate_stats.json` reports 54 because the gate-map pass re-runs the model in fp32 instead of fp16). The C0 gate is identical for every prompt (mean absolute change 0.0); the C gate changes by 0.09 on average. The paper's Fig. 2 shows one such scene.
 
 The numbers are **not comparable** to the LGD paper (seen 48 / unseen 42; 18 unseen for GR-ConvNet + CLIP). Training here uses 3.6% of the images and testing covers only the annotated test pairs; the prompt-blind model A already exceeds the reported GR-ConvNet + CLIP unseen score, which indicates a different protocol.
 
@@ -54,7 +54,7 @@ The ground-truth `Q` target is a flat block, so its smoothed maximum is a platea
 | `gate_stats.json` | gate-map statistics on the 118 multi-object test scenes | `src/extras.py` |
 | `fixed_val_curves.csv` | per-epoch success on the fixed 1,000-pair validation subset | `src/extras.py` (from `train_log.csv`) |
 | `latency_e2e.csv`, `latency_e2e.json` | latency per stage (plateau decoder) | `src/latency_e2e.py` |
-| `summary.csv` | one row per run; `val` is full-validation success at the selected checkpoint, `kaggle_version` the Kaggle notebook version that trained the run, `wall_hours` the training wall time | collected by hand from `runs/<run>/metrics.json` |
+| `summary.csv` | one row per run with the original (argmax-decoded) test numbers; `val` is full-validation success at the selected checkpoint, `kaggle_version` the Kaggle notebook version that trained the run, `wall_hours` the training wall time | collected by hand from `runs/<run>/metrics.json` |
 
 The analyses can be recomputed offline from the committed predictions: `python src/extras.py --skip-gpu --data-root <ga_eval> --runs-dir results/runs/plateau --out /tmp/extras` (the test manifests in `<ga_eval>` come from notebook 01).
 
@@ -119,8 +119,9 @@ python tests.py --device cuda:0
 python launch.py --variants C E --max-hours 3.5 --base runs
 python summarize.py --variants C E --base runs --destination results
 python latency_e2e.py --gpu 0 --out results
-python reeval.py --data-root /path/to/ga_eval --runs-dir .. --out reeval     # checkpoints under ../results/<run>/best.pt
-python extras.py --data-root /path/to/ga_eval --runs-dir reeval/plateau --out reeval/extras
+python reeval.py --data-root /path/to/ga_eval --runs-dir . --out reeval      # finds results/<run>/best.pt below --runs-dir
+python extras.py --skip-gpu --data-root /path/to/ga_eval --runs-dir reeval/plateau --out reeval/extras
+# the gate-map part of extras.py (without --skip-gpu) currently looks for checkpoints under /kaggle/input
 ```
 
 4. **Offline checks** (CPU, no data): `python -m pytest tests -q`.

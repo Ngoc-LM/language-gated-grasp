@@ -1,13 +1,13 @@
 \begin{strip}
 \centering
-\vspace{-2.6em}
+\vspace{-3.0em}
 \resizebox{\textwidth}{!}{\input{sec/fig_arch}}
 \captionsetup{hypcap=false}
-\captionof{figure}{\textbf{Language-Gated GR-ConvNet.} Blue: trained (2.9M parameters); CLIP~\cite{radford2021learning}: frozen. The prompt enters through a spatial gate $A$ and through FiLM~\cite{perez2018film} after every residual block. C0 replaces $W_t t$ by a learned vector $q$.}
+\captionof{figure}{\textbf{Language-Gated GR-ConvNet.} Blue: trained (2.9M parameters); CLIP~\cite{radford2021learning}: frozen. The prompt enters through a spatial gate $A$ and through FiLM~\cite{perez2018film} after every residual block.}
 \label{fig:arch}
 \vspace{-1.6em}
 \end{strip}
 
 \begin{abstract}
-Language-driven grasp detection places a grasp on the object part named by a free-form prompt. The proposed method steers the GR-ConvNet grasp CNN with FiLM and a \emph{language gate}: a spatial map of cosine similarities between frozen CLIP patch tokens and the prompt embedding. On the annotated pairs of the official LGD test split of Grasp-Anything++, the model reaches 68.6\% seen and 57.7\% unseen success (two-seed mean), against 54.8\% and 40.7\% with FiLM alone. A control gate that receives the same CLIP features but not the prompt scores 11.6 and 11.8 unseen points lower in the two seeds ($p<10^{-7}$), so prompt-dependent gating gives 9.4 of the 16.0-point gain in harmonic mean over FiLM. Code: \url{https://github.com/Ngoc-LM/language-gated-grasp}.
+Language-driven grasp detection places a grasp on the object part named by a prompt. The proposed method steers the GR-ConvNet grasp CNN with FiLM and a \emph{language gate}: a spatial map of similarities between projections of frozen CLIP patch tokens and of the prompt embedding. On the annotated pairs of the official LGD test split of Grasp-Anything++, the model reaches 68.6\% seen and 57.7\% unseen success (two-seed mean), against 54.8\% and 40.7\% with FiLM alone. A control gate with the same CLIP features but no prompt scores 11.6 and 11.8 unseen points lower in the two seeds ($p<10^{-7}$); prompt-dependent gating gives 9.4 of the 16.0-point gain in harmonic mean over FiLM. Code: \url{https://github.com/Ngoc-LM/language-gated-grasp}.
 \end{abstract}

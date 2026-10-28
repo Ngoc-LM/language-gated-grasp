@@ -18,6 +18,7 @@
   % ---- geometry lane (y=-0.75)
   \node[trn, minimum width=22mm] (enc) at (3.9,-0.6) {GR-ConvNet encoder};
   \node[op] (mul) at (10.0,-0.6) {$\odot$};
+  \node[anchor=north west, inner sep=1pt, font=\sffamily\scriptsize] at (mul.south east) {$(1{+}A)$};
   \node[trn, minimum width=30mm] (res) at (13.2,-0.6) {$5{\times}$[ResBlock$\,\rightarrow\,$FiLM$(t)$]\\Eq.~(1)};
   \node[trn] (dec) at (15.75,-0.6) {decoder};
   \node[trn] (heads) at (17.7,-0.6) {$Q,\ \cos2\Theta,$\\$\sin2\Theta,\ W$};
