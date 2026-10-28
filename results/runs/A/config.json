@@ -1,0 +1,26 @@
+{
+  "variants": [
+    "A",
+    "B"
+  ],
+  "variant": "A",
+  "img": 224,
+  "batch": 32,
+  "lr": 0.001,
+  "wd": 0.0001,
+  "epochs": 6,
+  "max_hours": 3.5,
+  "warmup_steps": 500,
+  "amp": true,
+  "seed": 0,
+  "num_workers": 2,
+  "width_norm": 150.0,
+  "min_rect_px": 2.0,
+  "lambda_gate": 0.5,
+  "val_subset": 1000,
+  "smoke": false,
+  "pack_root": "/tmp/ga_pack",
+  "cache": "/tmp/ga_cache",
+  "out": "/kaggle/working/runs/A",
+  "log_every": 200
+}

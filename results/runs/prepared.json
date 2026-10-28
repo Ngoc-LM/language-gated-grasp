@@ -1,0 +1,12 @@
+{
+  "N": 46593,
+  "P": 4772,
+  "variants": [
+    "C",
+    "D"
+  ],
+  "image_key": "1918f94cbcb96d317056b12ec832c477dee0f3153f4643845883079d4c548579",
+  "manifest_key": "93e8084b92a45c2ad7c5e4c50d8296462188341615619cbdb88484bba10893ef",
+  "metric_sha256": "51feb1fef4b180b7aee865c518fbc8fc9a25c531f8ac78439cd0f764557724b1",
+  "seconds": 287.326016504
+}

@@ -1,0 +1,66 @@
+{
+  "gpu": "Tesla T4",
+  "batch": 1,
+  "dtype": "fp16",
+  "warmup": 20,
+  "iterations": 100,
+  "prompt": "Lift mug by its handle.",
+  "note": "End-to-end batch-1 latency for every variant, measured sequentially in ONE process on ONE idle GPU.\n\nStages (CUDA-synchronised, warmup 20, timed 100, fp16):\n  head   = GraspNet forward + GPU blur/decode on cached inputs (what metrics.json reports as latency_ms)\n  text   = CLIP tokenizer (CPU) + CLIP text encoder        (variants B-E; once per instruction)\n  vision = CLIP ViT-B/16 image encoder -> 196 patch tokens  (variants C/D/E; once per image)\n  e2e    = text + vision + head in one loop (uint8 224x224 image and raw prompt string -> grasp)\nGraspNet weights are randomly initialised: run time does not depend on weight values.\n",
+  "rows": [
+    {
+      "variant": "A",
+      "trainable_params": 1897988,
+      "frozen_clip_params_used": 0,
+      "head_ms": 4.735864629990374,
+      "head_sd": 0.3429805738892406,
+      "clip_text_ms": 0.0,
+      "clip_vision_ms": 0.0,
+      "e2e_ms": 4.653866910007309,
+      "e2e_sd": 0.24306802278296855
+    },
+    {
+      "variant": "B",
+      "trainable_params": 2554628,
+      "frozen_clip_params_used": 63428096,
+      "head_ms": 5.919771839992336,
+      "head_sd": 0.30726697191611474,
+      "clip_text_ms": 6.421128019999287,
+      "clip_vision_ms": 0.0,
+      "e2e_ms": 14.119032659982622,
+      "e2e_sd": 1.6916377766820834
+    },
+    {
+      "variant": "C",
+      "trainable_params": 2882821,
+      "frozen_clip_params_used": 149227520,
+      "head_ms": 6.40833812999972,
+      "head_sd": 0.38589283485012227,
+      "clip_text_ms": 7.0098202099848095,
+      "clip_vision_ms": 6.576096599990251,
+      "e2e_ms": 19.682461829982003,
+      "e2e_sd": 0.8771757927780821
+    },
+    {
+      "variant": "D",
+      "trainable_params": 2882821,
+      "frozen_clip_params_used": 149227520,
+      "head_ms": 7.512842789988099,
+      "head_sd": 0.5073746279456107,
+      "clip_text_ms": 6.390827400009584,
+      "clip_vision_ms": 6.207748469998933,
+      "e2e_ms": 21.465867329982302,
+      "e2e_sd": 2.0667195215083933
+    },
+    {
+      "variant": "E",
+      "trainable_params": 2751749,
+      "frozen_clip_params_used": 149227520,
+      "head_ms": 7.207916890008619,
+      "head_sd": 0.4355742280812914,
+      "clip_text_ms": 6.28318057000115,
+      "clip_vision_ms": 6.077171139991151,
+      "e2e_ms": 19.576172170006885,
+      "e2e_sd": 0.6599915076135284
+    }
+  ]
+}

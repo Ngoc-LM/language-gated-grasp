@@ -1,0 +1,118 @@
+{
+  "source_sha256": {
+    "train": "be667de484d229f4d34bb7df87115ed316bae74abc029ba3f68fd3821f20e40b",
+    "val": "95ffba323f0426f317dfb38af684ad306b2c558b8f43d6d027c1abf3f0f9854a",
+    "test_seen": "eadba1e927e83334b0298b46eccd388ca930afc5761f87caafbbcdacd8a149da",
+    "test_unseen": "ede13f840bffa28cd4be0caa811bb982103b71e158ede2f10a6afd5b7dc5c41c"
+  },
+  "unseen_names": [
+    "avocado",
+    "banana",
+    "bead",
+    "bottle",
+    "bowl",
+    "bracelet",
+    "candle",
+    "chopstick",
+    "cookie",
+    "cutter",
+    "egg",
+    "eggplant",
+    "eyeglasse",
+    "grape",
+    "hairbrush",
+    "lamp",
+    "paintbrush",
+    "pear",
+    "pumpkin",
+    "seashell",
+    "sunflower",
+    "toothpaste",
+    "walnut"
+  ],
+  "removals": {
+    "train": {
+      "before": 183941,
+      "removed": 382,
+      "top20": [
+        [
+          "bottle",
+          160
+        ],
+        [
+          "pear",
+          119
+        ],
+        [
+          "walnut",
+          36
+        ],
+        [
+          "grape",
+          30
+        ],
+        [
+          "bracelet",
+          11
+        ],
+        [
+          "paintbrush",
+          10
+        ],
+        [
+          "egg",
+          7
+        ],
+        [
+          "avocado",
+          6
+        ],
+        [
+          "pumpkin",
+          2
+        ],
+        [
+          "eyeglasse",
+          1
+        ]
+      ]
+    },
+    "val": {
+      "before": 3745,
+      "removed": 8,
+      "top20": [
+        [
+          "walnut",
+          2
+        ],
+        [
+          "bottle",
+          2
+        ],
+        [
+          "paintbrush",
+          1
+        ],
+        [
+          "pear",
+          1
+        ],
+        [
+          "egg",
+          1
+        ],
+        [
+          "grape",
+          1
+        ]
+      ]
+    }
+  },
+  "counts": {
+    "train": 183559,
+    "val": 3737,
+    "test_seen": 1376,
+    "test_unseen": 601
+  },
+  "version": "grip-v1"
+}

@@ -1,0 +1,51 @@
+{
+  "run_id": "0083c21e718b58dd32ac51dd6d9e52843ba1e0284a2934399bea63910963f1c1",
+  "variant": "B",
+  "smoke": false,
+  "params": 2554628,
+  "trainable": 2554628,
+  "frozen": 0,
+  "val": 0.5844260101685844,
+  "seen": 0.5741279069767442,
+  "unseen": 0.41264559068219636,
+  "H": 0.48017371740041515,
+  "latency_ms": 5.9589404499820375,
+  "latency_scope": "batch1 cached-input forward + GPU blur/decode; warmup20, timed100, per-iteration CUDA sync",
+  "best_epoch": 5,
+  "best_selection_val": 0.587,
+  "steps": 34422,
+  "wall_seconds": 9417.952241518,
+  "stop_reason": "epochs",
+  "eval_counts": {
+    "val": 3737,
+    "test_seen": 1376,
+    "test_unseen": 601
+  },
+  "metric_sha256": "51feb1fef4b180b7aee865c518fbc8fc9a25c531f8ac78439cd0f764557724b1",
+  "config": {
+    "variants": [
+      "A",
+      "B"
+    ],
+    "variant": "B",
+    "img": 224,
+    "batch": 32,
+    "lr": 0.001,
+    "wd": 0.0001,
+    "epochs": 6,
+    "max_hours": 3.5,
+    "warmup_steps": 500,
+    "amp": true,
+    "seed": 1,
+    "num_workers": 2,
+    "width_norm": 150.0,
+    "min_rect_px": 2.0,
+    "lambda_gate": 0.5,
+    "val_subset": 1000,
+    "smoke": false,
+    "pack_root": "/tmp/ga_pack",
+    "cache": "/tmp/ga_cache",
+    "out": "/kaggle/working/runs/B_s1",
+    "log_every": 200
+  }
+}

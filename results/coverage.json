@@ -1,3 +1,76 @@
-{"train_pairs": 183559, "train_scenes": 35927, "train_names": 238,
- "seen": {"pairs": 1376, "scenes": 412, "names": 41, "names_in_train": 40, "pairs_in_train": 1373, "median_train_pairs_per_name": 3723.0, "pairs_in_multi_object_scenes": 589},
- "unseen": {"pairs": 601, "scenes": 193, "names": 23, "names_in_train": 0, "pairs_in_train": 0, "median_train_pairs_per_name": 0.0, "pairs_in_multi_object_scenes": 105}}
+{
+  "train_pairs": 183559,
+  "train_scenes": 35927,
+  "train_names": 238,
+  "unseen_name_mentions_in_train": {
+    "names": 3,
+    "pairs": 5332,
+    "by_name": {
+      "bottle": {
+        "pairs": 18,
+        "examples": [
+          "Grab wine on its bottle or glass.",
+          "Pick up wine by its bottle or glass.",
+          "Pick up glue by its bottle or tube.",
+          "Hold glue at its bottle or tube.",
+          "Grab perfume on its bottle."
+        ],
+        "in_parsed_object_name": 0,
+        "object_names": {
+          "wine": 8,
+          "glue": 5,
+          "soda": 3,
+          "perfume": 2
+        }
+      },
+      "bowl": {
+        "pairs": 5302,
+        "examples": [
+          "Grasp spoon at its bowl-shaped.",
+          "Hold spoon at its bowl-shaped.",
+          "Pick up spoon by its bowl-shaped.",
+          "Take spoon by its bowl-shaped.",
+          "Take hold of spoon on its bowl-shaped."
+        ],
+        "in_parsed_object_name": 0,
+        "object_names": {
+          "spoon": 5301,
+          "scoop": 1
+        }
+      },
+      "candle": {
+        "pairs": 12,
+        "examples": [
+          "Grasp candlestick at its candle holder.",
+          "Take hold of candlestick on its candle holder.",
+          "Take hold of candlestick on its candle holder.",
+          "Take candlestick by its candle holder.",
+          "Hold candlestick at its candle holder."
+        ],
+        "in_parsed_object_name": 0,
+        "object_names": {
+          "candlestick": 12
+        }
+      }
+    },
+    "note": "in_parsed_object_name/object_names were added from a check run in the same Kaggle session before extras.py recorded them (commit 4b59994 onwards writes them directly)"
+  },
+  "seen": {
+    "pairs": 1376,
+    "scenes": 412,
+    "names": 41,
+    "names_in_train": 40,
+    "pairs_in_train": 1373,
+    "median_train_pairs_per_name": 3723.0,
+    "pairs_in_multi_object_scenes": 589
+  },
+  "unseen": {
+    "pairs": 601,
+    "scenes": 193,
+    "names": 23,
+    "names_in_train": 0,
+    "pairs_in_train": 0,
+    "median_train_pairs_per_name": 0.0,
+    "pairs_in_multi_object_scenes": 105
+  }
+}

@@ -1,9 +1,9 @@
 run,variant,description,seed,trainable_params,val,seen,unseen,H,best_epoch,kaggle_version,wall_hours
 A,A,GR-ConvNet vision only,0,1897988,0.4490,0.2725,0.2779,0.2752,6,3,2.58
 B,B,+ FiLM(t),0,2554628,0.5761,0.5203,0.4010,0.4529,3,3,2.53
-B_s1,B,+ FiLM(t),1,2554628,0.5844,0.5741,0.4126,0.4802,5,6,
+B_s1,B,+ FiLM(t),1,2554628,0.5844,0.5741,0.4126,0.4802,5,6,2.62
 E,E (C0),B + text-free CLIP gate,0,2751749,0.6299,0.6279,0.4792,0.5436,3,5,2.71
-E_s1,E (C0),B + text-free CLIP gate,1,2751749,0.6342,0.6381,0.4409,0.5215,6,6,
+E_s1,E (C0),B + text-free CLIP gate,1,2751749,0.6342,0.6381,0.4409,0.5215,6,6,2.62
 C,C,B + language gate (proposed),0,2882821,0.6762,0.6911,0.5973,0.6408,6,4,2.68
 C_s1,C,B + language gate (proposed),1,2882821,0.6770,0.6817,0.5591,0.6143,5,5,2.63
 D,D,C + gate supervision,0,2882821,0.6709,0.7086,0.5774,0.6363,5,4,2.66

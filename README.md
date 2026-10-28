@@ -38,18 +38,25 @@ The numbers are **not comparable** to the LGD paper (seen 48 / unseen 42; 18 uns
 
 ### Decoding
 
-The ground-truth `Q` target is a flat block, so its smoothed maximum is a plateau. A plain `argmax` returns the first (top-left) pixel of that plateau, which on synthetic rectangles lies a median 24 px from the centre. The decoder therefore picks the most interior pixel of the near-maximum set (`infer.select_peak`); for a unique maximum this equals `argmax`. All checkpoints were re-evaluated with [`src/reeval.py`](src/reeval.py) under both decoders ([`results/reeval_summary.csv`](results/reeval_summary.csv)): `decode='argmax'` reproduces the original numbers of all 8 runs exactly, and the plateau decoder changes each model's success by at most 0.2 points. It raises the ground-truth-map decoding ceiling from 97.5% to 98.0% (200 validation pairs). The table above uses the plateau decoder.
+The ground-truth `Q` target is a flat block, so its smoothed maximum is a plateau. A plain `argmax` returns the first (top-left) pixel of that plateau, which on synthetic rectangles lies a median 24 px from the centre. The decoder therefore picks the most interior pixel of the near-maximum set (`infer.select_peak`); for a unique maximum this equals `argmax`. All checkpoints were re-evaluated with [`src/reeval.py`](src/reeval.py) under both decoders ([`results/reeval_summary.csv`](results/reeval_summary.csv)): `decode='argmax'` reproduces the original per-pair success of all 8 runs exactly (82 of 15,816 predicted centres move because of fp16 ties, without changing any outcome), and the plateau decoder changes each model's success by at most 0.2 points. It raises the ground-truth-map decoding ceiling from 97.5% to 98.0% (200 validation pairs). The table above uses the plateau decoder.
 
 ### Result files ([`results/`](results))
 
 | file | content | produced by |
 |---|---|---|
 | `reeval_summary.csv` | test success of every checkpoint with both decoders | `src/reeval.py` |
-| `mcnemar.csv` | paired McNemar tests and scene-clustered bootstrap intervals | `src/extras.py` |
+| `runs/<run>/` | original outputs of each run: `metrics.json`, `config.json`, per-pair test predictions, and `train_log.csv` (every 100th training step plus all validation rows; not kept for E and C_s1) | `train.py` |
+| `runs/plateau/<run>/` | per-pair test predictions of the same checkpoints with the plateau decoder | `src/reeval.py` |
+| `runs/*.json`, `runs/target_roundtrip.csv` | data-preparation record (leakage filter, caches) and the ground-truth-map decoding check | `prepare.py`, `tests.py` |
+| `target_roundtrip_both_decoders.json` | ground-truth-map decoding ceiling with both decoders | `src/reeval.py` |
+| `mcnemar.csv` | paired McNemar tests and scene-clustered bootstrap intervals (plateau decoder) | `src/extras.py` |
 | `coverage.json`, `coverage_success.csv` | training coverage of test object names, independent leakage search, success on single- vs multi-object scenes | `src/extras.py` |
+| `gate_stats.json` | gate-map statistics on the 118 multi-object test scenes | `src/extras.py` |
 | `fixed_val_curves.csv` | per-epoch success on the fixed 1,000-pair validation subset | `src/extras.py` (from `train_log.csv`) |
-| `latency_e2e.csv` | latency per stage | `src/latency_e2e.py` |
-| `summary.csv` | one row per run; `val` is full-validation success at the selected checkpoint, `kaggle_version` the Kaggle notebook version that trained the run, `wall_hours` is empty where the run log was not kept | collected by hand from the run outputs |
+| `latency_e2e.csv`, `latency_e2e.json` | latency per stage (plateau decoder) | `src/latency_e2e.py` |
+| `summary.csv` | one row per run; `val` is full-validation success at the selected checkpoint, `kaggle_version` the Kaggle notebook version that trained the run, `wall_hours` the training wall time | collected by hand from `runs/<run>/metrics.json` |
+
+The analyses can be recomputed offline from the committed predictions: `python src/extras.py --skip-gpu --data-root <ga_eval> --runs-dir results/runs/plateau --out /tmp/extras` (the test manifests in `<ga_eval>` come from notebook 01).
 
 ## Evaluation protocol
 

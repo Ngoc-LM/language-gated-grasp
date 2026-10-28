@@ -1,0 +1,8 @@
+{
+  "rate": 0.975,
+  "n": 200,
+  "threshold": 0.8,
+  "seed": 0,
+  "manifest_key": "93e8084b92a45c2ad7c5e4c50d8296462188341615619cbdb88484bba10893ef",
+  "metric_sha256": "51feb1fef4b180b7aee865c518fbc8fc9a25c531f8ac78439cd0f764557724b1"
+}

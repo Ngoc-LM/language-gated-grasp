@@ -5,7 +5,8 @@ __pycache__/
 *.bin
 *.u8
 *.f16
-runs/
+/runs/
+/src/runs/
 paper/*.aux
 paper/*.log
 paper/*.out

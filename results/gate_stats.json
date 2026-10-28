@@ -1,0 +1,7 @@
+{
+  "scenes": 118,
+  "both_prompts_C_ok": 54,
+  "both_prompts_E_ok": 40,
+  "mean_gate_change_C": 0.09029427536249669,
+  "mean_gate_change_E": 0.0
+}
