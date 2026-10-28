@@ -8,3 +8,10 @@ Pillow
 shapely
 opencv-python-headless
 matplotlib
+scipy
+# notebook 01 (data build) only
+requests
+huggingface_hub
+stream_unzip
+# offline checks
+pytest

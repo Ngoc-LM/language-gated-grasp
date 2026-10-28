@@ -59,15 +59,16 @@ def build_cache(root, cache, device):
     val200 = val.sample(n=200, random_state=0).reset_index(drop=True)                    # same sample as tests.py
     for name, frame in {**tests, 'val200': val200}.items(): frame.to_csv(cache / f'{name}.csv', index=False)
     scenes = sorted(set(tests['test_seen']['scene']) | set(tests['test_unseen']['scene']) | set(val200['scene']))
-    n = len(scenes)
+    n = len(scenes); log(f'building mini cache in {cache}: decoding {n} scenes')
     images = np.memmap(cache / 'img224.u8', mode='w+', dtype=np.uint8, shape=(n, 224, 224, 3))
     for i, scene in enumerate(scenes):
         image = read_jpeg(root, scene)
         if image.size != (416, 416): raise ValueError(f'{scene}: {image.size}')
         images[i] = np.asarray(image.resize((224, 224), resample=Image.Resampling.BILINEAR))
+        if (i + 1) % 100 == 0 or i + 1 == n: log(f'decoded {i + 1}/{n} images')
     images.flush(); del images
     save_json(cache / 'images.json', {'N': n}); save_json(cache / 'scene_to_index.json', {s: i for i, s in enumerate(scenes)})
-    from transformers import AutoTokenizer, CLIPModel
+    log('loading frozen CLIP ViT-B/16'); from transformers import AutoTokenizer, CLIPModel
     clip = CLIPModel.from_pretrained(CLIP_ID, torch_dtype=torch.float16).to(device).eval()
     tokenizer = AutoTokenizer.from_pretrained(CLIP_ID)
     mean = torch.tensor([.48145466, .4578275, .40821073], device=device)[None, :, None, None]
@@ -81,6 +82,7 @@ def build_cache(root, cache, device):
             x = torch.from_numpy(pixels[start:start + 64].copy()).to(device).permute(0, 3, 1, 2).float() / 255
             hidden = clip.vision_model(pixel_values=((x - mean) / std).half()).last_hidden_state[:, 1:, :]
             tokens[start:start + 64] = clip.vision_model.post_layernorm(hidden).cpu().numpy().astype(np.float16)
+            log(f'CLIP patch tokens {min(start + 64, n)}/{n}')
         for start in range(0, len(prompts), 256):
             t = tokenizer(prompts[start:start + 256], padding=True, truncation=True, max_length=77, return_tensors='pt')
             out = clip.get_text_features(**{k: v.to(device) for k, v in t.items()})
@@ -108,7 +110,7 @@ def main():
     parser.add_argument('--runs', nargs='+', default=RUNS); parser.add_argument('--cache', default='/tmp/reeval_cache')
     parser.add_argument('--out', default='/kaggle/working/reeval'); parser.add_argument('--gpu', type=int, default=0)
     args = parser.parse_args()
-    device = torch.device(f'cuda:{args.gpu}'); torch.cuda.set_device(device)
+    log('reeval: start'); device = torch.device(f'cuda:{args.gpu}'); torch.cuda.set_device(device)
     root = find_root(args.data_root); cache = Path(args.cache); out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     if not (cache / 'prompt_to_row.json').is_file(): build_cache(root, cache, device)
     if not (out / 'target_roundtrip.json').is_file(): roundtrip(cache, root, out)
