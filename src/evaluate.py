@@ -1,4 +1,4 @@
-"""Metric calls are imported from the dataset's unchanged eval_utils.py."""
+"""Top-1 evaluation with the success metric in eval_utils.py (this project's implementation of the LGD criterion)."""
 import csv
 import dataclasses
 import warnings
