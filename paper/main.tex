@@ -1,114 +1,53 @@
+% CVPR 2026 Paper Template; see https://github.com/cvpr-org/author-kit
+
 \documentclass[10pt,twocolumn,letterpaper]{article}
-\usepackage[pagenumbers]{cvpr}
 
-\usepackage{graphicx}
-\usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage[table]{xcolor}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,calc}
-\usepackage{cuted}
-\usepackage{caption}
-\captionsetup{font=small,skip=3pt}
-\usepackage{microtype}
-\usepackage{pifont}
+%%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
+\usepackage{cvpr}              % To produce the CAMERA-READY version
+% \usepackage[review]{cvpr}      % To produce the REVIEW version
+% \usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
 
+% Import additional packages in the preamble file, before hyperref
+\input{preamble}
+
+% It is strongly recommended to use hyperref, especially for the review version.
+% hyperref with option pagebackref eases the reviewers' job.
+% Please disable hyperref *only* if you encounter grave issues, 
+% e.g. with the file validation for the camera-ready version.
+%
+% If you comment hyperref and then uncomment it, you should delete *.aux before re-running LaTeX.
+% (Or just hit 'q' on the first LaTeX run, let it finish, and you should be clear).
 \definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
-\usepackage[breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
 
-\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
-\setlength{\floatsep}{6pt plus 2pt minus 2pt}
-\def\paperID{FFI26}
+%%%%%%%%% PAPER ID  - PLEASE UPDATE
+\def\paperID{*****} % *** Enter the Paper ID here
 \def\confName{CVPR}
 \def\confYear{2026}
 
+%%%%%%%%% TITLE - PLEASE UPDATE
 \title{Language-Gated GR-ConvNet: Steering a Compact Grasp CNN\\with Frozen CLIP Patch--Text Similarity}
+
+%%%%%%%%% AUTHORS - PLEASE UPDATE
 \author{Minh-Ngoc Luong\\
 Hanoi University of Science and Technology\\
 {\tt\small ngoclm004@gmail.com}}
 
 \begin{document}
-\setlength{\abovedisplayskip}{4pt plus 2pt}\setlength{\belowdisplayskip}{4pt plus 2pt}
 \maketitle
-
-\begin{strip}
-\centering
-\vspace{-2.6em}
-\resizebox{\textwidth}{!}{\input{fig_arch}}
-\captionsetup{hypcap=false}
-\captionof{figure}{\textbf{Language-Gated GR-ConvNet.} Blue: trained (2.9M parameters); CLIP~\cite{radford2021learning}: frozen. The prompt enters through a spatial gate $A$ and through FiLM~\cite{perez2018film} after every residual block. C0 replaces $W_t t$ by a learned vector $q$.}
-\label{fig:arch}
-\vspace{-1.0em}
-\end{strip}
-
-\begin{abstract}
-Language-driven grasp detection places a grasp on the object part named by a free-form prompt. The proposed method steers the GR-ConvNet grasp CNN with FiLM and a \emph{language gate}: a spatial map of cosine similarities between frozen CLIP patch tokens and the prompt embedding. On the annotated pairs of the official LGD test split of Grasp-Anything++, the model reaches 68.6\% seen and 57.8\% unseen success (two-seed mean), against 54.7\% and 40.7\% with FiLM alone. A control gate that receives the same CLIP features but not the prompt scores 11.8 unseen points lower in both seeds ($p<10^{-7}$), so prompt-dependent gating gives 9.5 of the 16.1-point gain in harmonic mean over FiLM. Code: \url{https://github.com/Ngoc-LM/language-gated-grasp}.
-\end{abstract}
-
-\section{Introduction}
-A parallel-jaw grasp~\cite{jiang2011efficient} is a rotated rectangle $g=(x,y,w,h,\theta)$. Language-driven grasp detection conditions $g$ on a prompt such as ``grasp the knife by its handle'', so the model must also locate the named part. On Grasp-Anything++ (1M images, 10M prompts), the reference method LGD~\cite{vuong2024language} is a diffusion model. This work tests whether a single-pass grasp CNN can instead be steered by language. The contributions are (i) a \emph{language gate} that re-weights GR-ConvNet~\cite{kumra2020antipodal} features by CLIP~\cite{radford2021learning} patch--text similarity (\cref{fig:arch}); and (ii) a controlled ablation (text-free gate, two seeds, paired tests) that separates CLIP visual features from prompt-dependent gating, with open code.
-
-\section{Related Work}
-Generative grasp CNNs~\cite{morrison2018closing,kumra2020antipodal} regress dense grasp maps. CLIPort~\cite{shridhar2022cliport} and CROG~\cite{tziafas2023language} use CLIP for manipulation and grasping, and LGD~\cite{vuong2024language} denoises grasps under text guidance on data built with foundation models~\cite{vuong2024grasp}. Pixel--text score maps from CLIP-style encoders drive dense prediction~\cite{zhou2022extract}; the language gate uses one as a spatial prior in a grasp CNN.
-
-\section{Method}
-\textbf{Grasp maps.} As in~\cite{kumra2020antipodal}, the network predicts four $224{\times}224$ maps: quality $Q$, $\cos2\Theta$, $\sin2\Theta$ and opening $W$. Targets fill the central third of each ground-truth rectangle. The grasp is read at $\arg\max Q$ of the smoothed maps, with $\theta=\tfrac12\operatorname{atan2}(\sin2\Theta,\cos2\Theta)$ and $h=w/2$.
-
-\textbf{FiLM.} The encoder maps the image to $F\in\mathbb{R}^{128\times56\times56}$, followed by five residual blocks and a decoder. With $t$ the normalised CLIP text embedding, each residual block $k$ is followed by
-\begin{equation}
-F \leftarrow \big(1+\Delta\gamma_k(t)\big)\odot F + \beta_k(t),
-\end{equation}
-where $\Delta\gamma_k,\beta_k\in\mathbb{R}^{128}$ come from a zero-initialised linear layer, so each FiLM layer is the identity at initialisation.
-
-\textbf{Language gate (proposed).} FiLM applies the same channel modulation at every pixel, so it can favour one object among several only indirectly. The language gate therefore compares the $14{\times}14$ post-LayerNorm patch tokens $P$ of a frozen CLIP ViT-B/16 with the prompt and re-weights the encoder output:
-\begin{equation}
-\begin{gathered}
-S_{ij}=\cos(W_p\,p_{ij},\,W_t\,t),\\
-A=\mathrm{Up}_{56}\big(\sigma(\tau S)\big),\qquad F'=F\odot(1+A),
-\end{gathered}
-\end{equation}
-where $p_{ij}\in\mathbb{R}^{768}$ is a patch token, $W_p$ and $W_t$ are learned affine maps to $\mathbb{R}^{256}$, $\tau$ is a learned scale (initially 10), and $\mathrm{Up}_{56}$ bilinearly upsamples $S\in\mathbb{R}^{14\times14}$ to $56{\times}56$. The residual form $1{+}A$ only amplifies prompt-matching regions. The \textbf{C0 control} replaces $W_t t$ with a learned vector $q$: its gate sees the same CLIP features but not the prompt (FiLM still receives $t$), and it has 131k fewer parameters than C. \textbf{Loss:} Smooth-$\ell_1$ summed over the four maps. Variant D adds $0.5\,\mathrm{BCE}(\tau S, M)$, $M$ the pooled ground-truth $Q$ mask.
-
-\section{Experiments}
-\textbf{Protocol.} Training uses 35,927 Grasp-Anything++ scenes (183,559 prompt--grasp pairs) and validation 734 scenes. Testing follows the official LGD seen/unseen split, restricted to annotated pairs: 1,376 seen and 601 unseen from 727 of 803 object keys. Test scenes, and training pairs whose object name is an unseen test name, are excluded from training; 40 of the 41 seen names (1,373 of 1,376 pairs) occur in training. A top-1 grasp is correct if its IoU exceeds 0.25 and its angle error is below $30^\circ$ for some ground-truth grasp of the prompted part; $H$ is the harmonic mean of seen and unseen success. All runs use AdamW (lr $10^{-3}$, weight decay $10^{-4}$, 500 warm-up steps, cosine), fp16, batch 32 and 6 epochs on one T4 (2.5--2.7\,h); checkpoints are selected on 1,000 validation pairs.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig/gate.png}
-\caption{\textbf{Gate maps} (heat), top-1 grasps (red) and GT (green) on an unseen test image, seed 0. P1: ``Hold chopsticks at its pair of sticks''; P2: ``Take hold of bottle on its container''. The C0 gate ignores the prompt; the C gate follows it. Shown: largest C-gate change among these scenes where only C is correct for both.}
-\label{fig:qual}
-\end{figure}
-
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{2.2pt}
-\begin{tabular}{@{}llcccc@{}}
-\toprule
- & Model & Seen & Unseen & $H$ & ms \\
-\midrule
-A & GR-ConvNet (RGB, no text) & 27.3 & 27.8 & 27.5 & 4.3 \\
-B & + FiLM$(t)$ & 54.7$_{\pm2.7}$ & 40.7$_{\pm0.6}$ & 46.7$_{\pm1.4}$ & 12.3 \\
-C0 & B + text-free gate & 63.3$_{\pm0.5}$ & 46.0$_{\pm1.9}$ & 53.3$_{\pm1.1}$ & 18.2 \\
-\rowcolor{cvprblue!10}
-C & B + language gate & \textbf{68.6}$_{\pm0.5}$ & \textbf{57.8}$_{\pm1.9}$ & \textbf{62.8}$_{\pm1.3}$ & 18.9 \\
-D & C + gate supervision & 70.9 & 57.7 & 63.6 & 18.8 \\
-\bottomrule
-\end{tabular}
-\caption{\textbf{Success rate (\%) on the annotated test split.} B, C0, C: two-seed mean${\pm}$half-range. ms: batch-1 T4 latency incl.\ CLIP.}
-\label{tab:main}
-\end{table}
-
-\textbf{Results.} FiLM (B) raises $H$ by 19.1 points, CLIP features behind the text-free gate (C0) add 6.6, and letting the gate read the prompt (C) adds 9.5. Within each seed, C exceeds C0 by 11.8 unseen points and by 6.3 and 4.4 seen points; paired McNemar tests on the same test pairs give $p<10^{-3}$ in all four comparisons, and scene-resampled 95\% bootstrap intervals exclude zero (unseen: $[6.6,17.5]$ and $[5.9,17.4]$ points). In seed 1, the text-free gate raises seen success over B by 6.4 points ($p<10^{-6}$) but unseen success by only 2.8 ($p=0.21$). In the 118 multi-object test scenes, C is correct for two prompts on different objects in 54 and C0 in 40 (seed 0, \cref{fig:qual}). Prompt-dependent gating therefore accounts for 69\% of the B$\to$C gain on unseen objects, 59\% in $H$ and 38\% on seen objects. Gate supervision (D) does not differ significantly from C (seed 0; $p=0.06$ seen, $0.24$ unseen), so C is retained.
-
-\textbf{Cost and limitations.} C adds 0.33M trained parameters to B and a frozen 149M-parameter CLIP (12.5\,ms per frame with a cached prompt), and trains on 3.6\% of the images. A already exceeds the 18 unseen that LGD~\cite{vuong2024language} reports for GR-ConvNet with CLIP, so LGD's 48/42 are not compared.
-
-\section{Conclusion}
-A frozen-CLIP patch--text gate raises the $H$ of a FiLM-conditioned GR-ConvNet from 46.7 to 62.8, 9.5 points of it through prompt-dependent gating.
-
-{\footnotesize
-\bibliographystyle{ieeenat_fullname}
-\bibliography{refs}
+\input{sec/0_abstract}
+\input{sec/1_intro}
+\input{sec/2_related}
+\input{sec/3_method}
+\input{sec/4_experiments}
+\input{sec/5_conclusion}
+{
+    \footnotesize
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{main}
 }
+
+% WARNING: do not forget to delete the supplementary pages from your submission 
+% \input{sec/X_suppl}
 
 \end{document}

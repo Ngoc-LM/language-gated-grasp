@@ -1,0 +1,17 @@
+\section{Method}
+\textbf{Grasp maps.} As in~\cite{kumra2020antipodal}, the network predicts four $224{\times}224$ maps: quality $Q$, $\cos2\Theta$, $\sin2\Theta$ and opening $W$. Targets fill the central third of each ground-truth rectangle. The grasp is read at $\arg\max Q$ of the smoothed maps, with $\theta=\tfrac12\operatorname{atan2}(\sin2\Theta,\cos2\Theta)$ and $h=w/2$.
+
+\textbf{FiLM.} The encoder maps the image to $F\in\mathbb{R}^{128\times56\times56}$, followed by five residual blocks and a decoder. With $t$ the normalised CLIP text embedding, each residual block $k$ is followed by
+\begin{equation}
+F \leftarrow \big(1+\Delta\gamma_k(t)\big)\odot F + \beta_k(t),
+\end{equation}
+where $\Delta\gamma_k,\beta_k\in\mathbb{R}^{128}$ come from a zero-initialised linear layer, so each FiLM layer is the identity at initialisation.
+
+\textbf{Language gate (proposed).} FiLM applies the same channel modulation at every pixel, so it can favour one object among several only indirectly. The language gate therefore compares the $14{\times}14$ post-LayerNorm patch tokens $P$ of a frozen CLIP ViT-B/16 with the prompt and re-weights the encoder output:
+\begin{equation}
+\begin{gathered}
+S_{ij}=\cos(W_p\,p_{ij},\,W_t\,t),\\
+A=\mathrm{Up}_{56}\big(\sigma(\tau S)\big),\qquad F'=F\odot(1+A),
+\end{gathered}
+\end{equation}
+where $p_{ij}\in\mathbb{R}^{768}$ is a patch token, $W_p$ and $W_t$ are learned affine maps to $\mathbb{R}^{256}$, $\tau$ is a learned scale (initially 10), and $\mathrm{Up}_{56}$ bilinearly upsamples $S\in\mathbb{R}^{14\times14}$ to $56{\times}56$. The residual form $1{+}A$ only amplifies prompt-matching regions. The \textbf{C0 control} replaces $W_t t$ with a learned vector $q$: its gate sees the same CLIP features but not the prompt (FiLM still receives $t$), and it has 131k fewer parameters than C. \textbf{Loss:} Smooth-$\ell_1$ summed over the four maps. Variant D adds $0.5\,\mathrm{BCE}(\tau S, M)$, $M$ the pooled ground-truth $Q$ mask.

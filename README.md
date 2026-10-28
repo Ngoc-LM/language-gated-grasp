@@ -72,7 +72,7 @@ src/
   eval_utils.py   success metric (shared verbatim with the data notebook)
   packed_io.py    reader for the packed image/label files
 results/          summary tables, validation curves, latency, figures
-paper/            LaTeX source (CVPR template) and PDF of the 2-page paper
+paper/            LaTeX source (CVPR 2026 author kit: main.tex, preamble.tex, sec/) and PDF of the 2-page paper
 ```
 
 ## Reproducing
