@@ -40,13 +40,13 @@ Test success (%) on the official LGD split of Grasp-Anything++ (1,376 seen, 601 
 | **C** | **B + language gate (proposed)** | 2.88M | 68.6±0.4 | 57.7±1.8 | 62.7±1.3 | 19.7 |
 | D | C + gate supervision | 2.88M | 70.8 | 57.7 | 63.6 | 21.5 |
 
-Success: the top-1 grasp has IoU > 0.25 and angle error < 30° with some ground-truth grasp of the prompted part. `H`: harmonic mean of seen and unseen success. Numbers use the plateau decoder (see [Decoding](#decoding)); the original argmax numbers are in [`results/summary.csv`](results/summary.csv) and differ by at most 0.2 points. All runs: 6 epochs on 35,927 scenes (183,559 prompt–grasp pairs), one Kaggle T4 per run, 2.5–2.7 h.
+Success: the top-1 grasp has IoU > 0.25 and angle error < 30° with some ground-truth grasp of the prompted part. *H*: harmonic mean of seen and unseen success. Numbers use the plateau decoder (see [Decoding](#decoding)); the original argmax numbers are in [`results/summary.csv`](results/summary.csv) and differ by at most 0.2 points. All runs: 6 epochs on 35,927 scenes (183,559 prompt–grasp pairs), one Kaggle T4 per run, 2.5–2.7 h.
 
 **What the controls show** (paired tests: [`results/mcnemar.csv`](results/mcnemar.csv))
 
 * **B → C0 (+6.6 H):** frozen CLIP patch features behind a gate that cannot read the prompt. The unseen gain varies between seeds: +7.8 points in seed 0 (McNemar p < 1e-3), +2.8 in seed 1 (p = 0.21).
 * **C0 → C (+9.4 H):** letting the gate read the prompt. Seed for seed, C exceeds C0 by 11.6 / 11.8 unseen and 6.3 / 4.4 seen points; McNemar p < 1e-3 in all four comparisons, and 95% bootstrap intervals that resample whole scenes exclude zero.
-* **Share of the B → C gain from prompt-dependent gating:** 69% unseen, 59% `H`, 38% seen.
+* **Share of the B → C gain from prompt-dependent gating:** 69% unseen, 59% *H*, 38% seen.
 * **D:** gate supervision does not differ significantly from C of the same seed (p = 0.06 seen, 0.28 unseen), so the simpler C is kept.
 * **Latency with a cached prompt** (the prompt rarely changes between frames): C takes 13.0 ms per frame (6.4 ms network + 6.6 ms CLIP image encoder).
 
@@ -65,11 +65,17 @@ Success: the top-1 grasp has IoU > 0.25 and angle error < 30° with some ground-
 ```bash
 python - <<'EOF'
 import pandas as pd
-acc = lambda run, split: 100 * pd.read_csv(f'results/runs/plateau/{run}/test_{split}_predictions.csv').success.mean()
-for name, runs in {'A': ['A'], 'B': ['B', 'B_s1'], 'C0': ['E', 'E_s1'], 'C': ['C', 'C_s1'], 'D': ['D']}.items():
-    rows = [(acc(r, 'seen'), acc(r, 'unseen')) for r in runs]
-    s, u, h = zip(*[(a, b, 2 * a * b / (a + b)) for a, b in rows])
-    print(f'{name:3s}', '  '.join(f'{k} {sum(v) / len(v):5.1f}' for k, v in zip(('seen', 'unseen', 'H'), (s, u, h))))
+def acc(run, split):
+    path = f'results/runs/plateau/{run}/test_{split}_predictions.csv'
+    return 100 * pd.read_csv(path).success.mean()
+groups = {'A': ['A'], 'B': ['B', 'B_s1'], 'C0': ['E', 'E_s1'],
+          'C': ['C', 'C_s1'], 'D': ['D']}
+for name, runs in groups.items():
+    s = [acc(r, 'seen') for r in runs]
+    u = [acc(r, 'unseen') for r in runs]
+    h = [2 * a * b / (a + b) for a, b in zip(s, u)]
+    mean = lambda v: sum(v) / len(v)
+    print(f'{name:3s} seen {mean(s):5.1f}  unseen {mean(u):5.1f}  H {mean(h):5.1f}')
 EOF
 ```
 
