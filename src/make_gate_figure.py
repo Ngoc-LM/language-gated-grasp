@@ -25,7 +25,7 @@ def corners(rect, scale):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('json'); parser.add_argument('--index', type=int, default=0)
-    parser.add_argument('--out', default='gate.png')
+    parser.add_argument('--out', default='gate.png'); parser.add_argument('--label-size', type=float, default=12)
     args = parser.parse_args()
     with open(args.json) as stream: entry = json.load(stream)[args.index]
     image = np.asarray(Image.open(io.BytesIO(base64.b64decode(entry['jpeg320_b64']))).convert('RGB'))
@@ -43,7 +43,7 @@ def main():
         ax.add_patch(Polygon(corners(item[run]['pred'], scale), closed=True, fill=False,
                              ec='#ff2d2d', lw=1.6))
         mark = '✓' if item[run]['ok'] else '✗'
-        ax.text(6, 22, f'{label} {mark}', color='white', fontsize=8, weight='bold',
+        ax.text(8, 8, f'{label} {mark}', color='white', fontsize=args.label_size, weight='bold', va='top',
                 bbox=dict(fc='black', alpha=0.55, pad=1.2, lw=0))
         ax.set_axis_off()
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0.03)
